@@ -1,0 +1,223 @@
+# DataCL — Deploy completo paso a paso
+## VibeCodingChile | datacl.cl
+
+---
+
+## ESTRUCTURA FINAL DEL REPO
+
+```
+datacl/
+├── index.html              ← Landing principal (GitHub Pages root)
+├── seguridad.html          ← Modulo ciberseguridad
+├── claudio-widget.js       ← Asistente IA Claudio Code (floats en todas las paginas)
+├── catalogo/
+│   ├── index.html          ← SPA del marketplace
+│   └── js/
+│       ├── app.js          ← Router + paginas (incluye AnonCL)
+│       └── datasets.js     ← Catalogo de datos
+├── bedrock_handler.py      ← Backend AnonCL API (deploy separado)
+├── requirements.txt        ← Dependencias Python
+├── CNAME                   ← datacl.cl
+└── _config.yml
+```
+
+---
+
+## PARTE 1 — FRONTEND (GitHub Pages) — Tiempo estimado: 15 min
+
+### Paso 1: Crear el repositorio
+
+```bash
+# En GitHub.com: New repository → nombre: "datachile" → Public → Create
+
+git init
+git remote add origin https://github.com/vibecodingchile/datachile.git
+```
+
+### Paso 2: Subir archivos
+
+```bash
+git add .
+git commit -m "feat: DataCL v2 + AnonCL + Claudio Code widget"
+git push -u origin main
+```
+
+### Paso 3: Activar GitHub Pages
+
+1. Ve a tu repo en GitHub
+2. Settings → Pages
+3. Source: "Deploy from a branch"
+4. Branch: main / root
+5. Save
+6. En 60 segundos tienes: `https://vibecodingchile.github.io/datachile`
+
+### Paso 4: Conectar dominio datacl.cl
+
+**En NIC Chile / tu registrar:**
+```
+Tipo A     @ → 185.199.108.153
+Tipo A     @ → 185.199.109.153
+Tipo A     @ → 185.199.110.153
+Tipo A     @ → 185.199.111.153
+Tipo CNAME www → vibecodingchile.github.io
+```
+
+**En GitHub Pages Settings:**
+- Custom domain: `datacl.cl`
+- Marcar "Enforce HTTPS" (despues de que propague el DNS, ~30 min)
+
+El archivo `CNAME` ya dice `datacl.cl` — GitHub lo lee automaticamente.
+
+---
+
+## PARTE 2 — BACKEND AnonCL API — Tiempo estimado: 30 min
+
+### Paso 5: Habilitar Amazon Bedrock
+
+1. Ir a https://console.aws.amazon.com/bedrock
+2. "Model access" en el menu lateral
+3. Buscar "Claude 3.5 Sonnet" de Anthropic
+4. "Request model access" → confirmar
+5. Esperar aprobacion (generalmente instantanea con cuenta verificada)
+
+### Paso 6: Crear credenciales IAM
+
+1. AWS Console → IAM → Users → "Create user"
+2. Nombre: `anoncl-api`
+3. Permisos → "Attach policies directly" → buscar y seleccionar:
+   - `AmazonBedrockFullAccess` (o crear politica minima abajo)
+4. Crear usuario → "Create access key" → Application running outside AWS
+5. Guardar: Access Key ID y Secret Access Key
+
+Politica minima (opcional, mas segura):
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["bedrock:InvokeModel"],
+    "Resource": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+  }]
+}
+```
+
+### Paso 7: Crear archivo .env
+
+```bash
+# En la raiz del proyecto, crear archivo .env (NO subir a git)
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=AKIAxxxxxxxxxxxxxxxxxx
+AWS_SECRET_ACCESS_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ANON_API_KEYS=anoncl_clave1,anoncl_clave2
+```
+
+Agregar `.env` al `.gitignore`:
+```bash
+echo ".env" >> .gitignore
+```
+
+### Paso 8: Deploy en Render.com (gratis para empezar)
+
+1. Ir a https://render.com → New → Web Service
+2. Conectar GitHub → seleccionar el repo
+3. Configurar:
+   - Name: `anoncl-api`
+   - Runtime: Python 3
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `uvicorn bedrock_handler:app --host 0.0.0.0 --port $PORT`
+4. Environment Variables → agregar las 4 variables del .env
+5. Deploy
+
+URL resultante: `https://anoncl-api.onrender.com`
+
+### Paso 9: Conectar el frontend con la API
+
+En `catalogo/js/app.js`, buscar la linea:
+```js
+apiUrl: 'https://api.datacl.cl',
+```
+Cambiarla por tu URL de Render:
+```js
+apiUrl: 'https://anoncl-api.onrender.com',
+```
+
+Hacer commit y push — GitHub Pages se actualiza automaticamente en ~2 min.
+
+---
+
+## PARTE 3 — CLAUDIO CODE (Asistente IA) — Tiempo estimado: 5 min
+
+### Paso 10: Configurar API Key de Anthropic
+
+El widget `claudio-widget.js` llama directamente a la API de Anthropic desde el browser.
+
+**Opcion A — Produccion (recomendada):**
+Crear un proxy endpoint en tu backend:
+```python
+# Agregar a bedrock_handler.py
+@app.post("/v1/chat")
+async def claudio_chat(messages: list, request: Request):
+    # Llama a Anthropic API con tu key de servidor
+    # Nunca expone la key al cliente
+    pass
+```
+
+**Opcion B — Demo rapido:**
+En `claudio-widget.js` linea del fetch, cambiar:
+```js
+// Reemplazar la URL directa de Anthropic por tu proxy:
+'https://anoncl-api.onrender.com/v1/chat'
+```
+
+**Por ahora el widget funciona en modo fallback** (muestra mensaje de WhatsApp si no hay API key) — igual es util para capturar leads.
+
+---
+
+## PARTE 4 — WHATSAPP
+
+El boton de WhatsApp ya esta integrado automaticamente en todas las paginas via `claudio-widget.js`.
+
+Numero configurado: **+56 9 2964 8142**
+
+Para cambiar el numero, edita en `claudio-widget.js`:
+```js
+const WA_NUMBER = CFG.whatsapp || '56929648142';
+```
+O via config en cada pagina:
+```js
+window.CLAUDIO_CONFIG = { whatsapp: '56929648142' };
+```
+
+---
+
+## CHECKLIST FINAL
+
+- [ ] Repo creado en GitHub (vibecodingchile/datachile)
+- [ ] GitHub Pages activado
+- [ ] DNS de datacl.cl apuntando a GitHub
+- [ ] HTTPS habilitado en GitHub Pages
+- [ ] Bedrock habilitado en AWS (Claude 3.5 Sonnet)
+- [ ] Credenciales IAM creadas y guardadas en .env
+- [ ] Backend deployado en Render
+- [ ] URL de Render actualizada en app.js
+- [ ] Widget Claudio Code funcionando (boton rojo flotante)
+- [ ] Boton WhatsApp visible (boton verde flotante)
+- [ ] Probar AnonCL demo en /catalogo → pestana AnonCL
+- [ ] Probar seguridad.html
+
+---
+
+## COSTOS ESTIMADOS
+
+| Servicio | Plan | Costo |
+|---|---|---|
+| GitHub Pages | Free | $0 |
+| Render.com | Free tier | $0 (con cold start) |
+| AWS Bedrock | Pay per token | ~$0.003/1K tokens |
+| Dominio datacl.cl | NIC Chile | ~$12 USD/año |
+
+**Total arranque: menos de $15 USD/año** hasta que lleguen los primeros clientes Pro.
+
+---
+
+Hecho por VibeCodingChile x Claudio Code — Santiago, Chile

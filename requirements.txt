@@ -1,0 +1,110 @@
+# AnonCL — Deploy con Amazon Bedrock
+
+## Arquitectura
+
+```
+datacl.cl (GitHub Pages)
+    └── /catalogo → SPA con página AnonCL integrada
+    └── api.datacl.cl → FastAPI en Lambda o EC2/Render
+
+Amazon Bedrock (us-east-1)
+    └── anthropic.claude-3-5-sonnet → motor de anonimización IA
+```
+
+---
+
+## 1. Habilitar Bedrock en AWS
+
+1. Ve a https://console.aws.amazon.com/bedrock
+2. **Model access** → Request access a `Claude 3.5 Sonnet`
+3. Espera aprobación (suele ser inmediata para Claude)
+
+---
+
+## 2. Crear usuario IAM
+
+```bash
+# En la consola AWS → IAM → Users → Create User
+# Política mínima necesaria:
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["bedrock:InvokeModel"],
+    "Resource": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+  }]
+}
+```
+
+Guarda las credenciales en `.env`:
+```
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=AKIAxxxxxxxxxx
+AWS_SECRET_ACCESS_KEY=xxxxxxxxxx
+ANON_API_KEYS=anoncl_key1,anoncl_key2
+```
+
+---
+
+## 3. Deploy opción A — Local / Render / Railway
+
+```bash
+pip install -r requirements.txt
+uvicorn bedrock_handler:app --host 0.0.0.0 --port 8001 --reload
+
+# En Render.com:
+# Build: pip install -r requirements.txt
+# Start: uvicorn bedrock_handler:app --host 0.0.0.0 --port $PORT
+```
+
+---
+
+## 4. Deploy opción B — AWS Lambda (recomendado para escalar)
+
+```bash
+pip install -r requirements.txt -t package/
+cp bedrock_handler.py package/
+cd package && zip -r ../lambda.zip . && cd ..
+
+# En Lambda:
+# Runtime: Python 3.12
+# Handler: bedrock_handler.handler
+# Memoria: 512 MB
+# Timeout: 60s
+# Variables de entorno: AWS_REGION, ANON_API_KEYS
+
+# API Gateway → HTTP API → integra con Lambda → dominio: api.datacl.cl
+```
+
+---
+
+## 5. Apuntar el frontend al API real
+
+En `catalogo/js/app.js`, cambia la línea:
+```js
+apiUrl: 'https://api.datacl.cl',  // ← tu URL real aquí
+```
+
+---
+
+## 6. Costos estimados Bedrock
+
+| Requests/mes | Tokens aprox | Costo Claude 3.5 Sonnet |
+|---|---|---|
+| 100 (free) | 50K | ~$0.15 |
+| 10.000 (pro) | 5M | ~$15 |
+| 100.000 (enterprise) | 50M | ~$150 |
+
+Con el plan Pro a $29.000 CLP (~$32 USD) → margen bruto ~50% después de AWS.
+
+---
+
+## Endpoints disponibles
+
+| Método | Ruta | Tier |
+|---|---|---|
+| GET | `/health` | todos |
+| POST | `/v1/anonymize` | free + pro |
+| POST | `/v1/batch` | pro+ |
+| GET | `/v1/usage` | pro+ |
+| GET | `/docs` | todos (Swagger) |
