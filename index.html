@@ -1,1 +1,1544 @@
-datacl.cl
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataCL — El Marketplace de Datos de Chile</title>
+<meta name="description" content="30 datasets chilenos listos para usar. Datos reales del INE, MINSAL, Ministerio de Economía y más. API incluida. Desde $0 para investigación.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #080A0C;
+  --deep: #0D1117;
+  --surface: #111820;
+  --card: #141C26;
+  --border: rgba(255,255,255,0.07);
+  --border-accent: rgba(0,212,120,0.3);
+  --green: #00D478;
+  --green-dim: rgba(0,212,120,0.12);
+  --green-glow: rgba(0,212,120,0.25);
+  --amber: #F5A623;
+  --blue: #4A9EFF;
+  --red: #FF5E5E;
+  --white: #F0F4F8;
+  --muted: #6B7A8D;
+  --mono: 'DM Mono', monospace;
+  --display: 'Syne', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── NOISE TEXTURE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.4;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 0 40px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(8,10,12,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-logo .dot { color: var(--green); }
+.nav-logo .badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  background: var(--green-dim);
+  color: var(--green);
+  border: 1px solid var(--border-accent);
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.nav-links a {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--white); }
+
+.nav-cta {
+  background: var(--green) !important;
+  color: var(--black) !important;
+  padding: 7px 16px !important;
+  border-radius: 4px;
+  font-weight: 500 !important;
+  transition: opacity 0.2s !important;
+}
+.nav-cta:hover { opacity: 0.85 !important; color: var(--black) !important; }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 120px 40px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Grid de fondo */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,120,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,120,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Glow verde */
+.hero::after {
+  content: '';
+  position: absolute;
+  top: -200px;
+  left: -200px;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(0,212,120,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--green);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border: 1px solid var(--border-accent);
+  padding: 6px 12px;
+  border-radius: 3px;
+  background: var(--green-dim);
+  margin-bottom: 32px;
+  animation: fadeUp 0.6s ease both;
+}
+.hero-tag::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.7); }
+}
+
+h1 {
+  font-family: var(--display);
+  font-size: clamp(48px, 7vw, 88px);
+  font-weight: 800;
+  line-height: 1.0;
+  letter-spacing: -2px;
+  margin-bottom: 24px;
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+h1 .accent { color: var(--green); }
+h1 .line2 { display: block; color: var(--muted); }
+
+.hero-sub {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 520px;
+  line-height: 1.7;
+  margin-bottom: 40px;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+.hero-sub strong { color: var(--white); }
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  animation: fadeUp 0.6s 0.3s ease both;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--green);
+  color: var(--black);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  padding: 14px 28px;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: all 0.2s;
+  letter-spacing: -0.3px;
+}
+.btn-primary:hover {
+  background: #00F589;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 30px var(--green-glow);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 14px 24px;
+  border-radius: 5px;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+.btn-secondary:hover {
+  border-color: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.04);
+}
+
+/* Stats bar */
+.hero-stats {
+  display: flex;
+  gap: 40px;
+  margin-top: 72px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border);
+  animation: fadeUp 0.6s 0.4s ease both;
+}
+.stat-item { }
+.stat-num {
+  font-family: var(--display);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: -1px;
+  display: block;
+}
+.stat-num .unit { color: var(--green); }
+.stat-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 2px;
+  display: block;
+}
+
+/* ── TICKER ── */
+.ticker-bar {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0;
+  overflow: hidden;
+  position: relative;
+}
+.ticker-bar::before,
+.ticker-bar::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 80px;
+  z-index: 2;
+}
+.ticker-bar::before { left: 0; background: linear-gradient(90deg, var(--surface), transparent); }
+.ticker-bar::after  { right: 0; background: linear-gradient(-90deg, var(--surface), transparent); }
+
+.ticker-track {
+  display: flex;
+  gap: 0;
+  animation: ticker 35s linear infinite;
+  white-space: nowrap;
+  width: max-content;
+}
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-item {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ticker-item .tag {
+  color: var(--green);
+  background: var(--green-dim);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+.ticker-sep { color: var(--border); }
+
+/* ── SECTIONS ── */
+section { padding: 100px 40px; }
+.section-inner { max-width: 1100px; margin: 0 auto; }
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--green);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::before {
+  content: '';
+  width: 24px; height: 1px;
+  background: var(--green);
+}
+
+h2 {
+  font-family: var(--display);
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+.h2-sub {
+  font-size: 16px;
+  color: var(--muted);
+  max-width: 480px;
+  margin-bottom: 60px;
+}
+
+/* ── PAIN POINTS ── */
+.pain-section { background: var(--deep); }
+
+.pain-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  margin-bottom: 60px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.pain-card {
+  background: var(--card);
+  padding: 36px 32px;
+  position: relative;
+  overflow: hidden;
+}
+.pain-card::before {
+  content: attr(data-n);
+  position: absolute;
+  top: 16px; right: 20px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(255,255,255,0.07);
+  font-weight: 500;
+}
+.pain-icon {
+  font-size: 28px;
+  margin-bottom: 16px;
+  display: block;
+}
+.pain-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 17px;
+  margin-bottom: 8px;
+  color: var(--white);
+}
+.pain-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.pain-card.solved {
+  background: rgba(0,212,120,0.04);
+  border-left: 2px solid var(--green);
+}
+.pain-card.solved .pain-title { color: var(--green); }
+
+.pain-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 48px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.pain-vs-col { flex: 1; }
+.pain-vs-col h4 {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+}
+.pain-vs-col.before h4 { color: var(--red); }
+.pain-vs-col.after h4 { color: var(--green); }
+.pain-vs-divider {
+  width: 1px;
+  height: 120px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.vs-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.vs-list li {
+  font-size: 14px;
+  color: var(--muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+}
+.vs-list li::before {
+  content: attr(data-icon);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── FEATURED DATASETS ── */
+.datasets-section { background: var(--black); }
+
+.ds-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.ds-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.25s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.ds-card:hover {
+  border-color: var(--border-accent);
+  background: rgba(0,212,120,0.03);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+.ds-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--green), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.ds-card:hover::before { opacity: 1; }
+
+.ds-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ds-sector {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.ds-sector.geo      { background: rgba(91,155,255,0.12); color: #5B9BFF; }
+.ds-sector.financiero { background: rgba(52,211,153,0.12); color: #34D399; }
+.ds-sector.comercio { background: rgba(251,146,60,0.12); color: #FB923C; }
+.ds-sector.ia       { background: rgba(255,107,99,0.12); color: #FF6B63; }
+.ds-sector.juridico { background: rgba(244,114,182,0.12); color: #F472B6; }
+.ds-sector.empresas { background: rgba(56,189,248,0.12); color: #38BDF8; }
+.ds-sector.precios  { background: rgba(251,191,36,0.12); color: #FBBF24; }
+.ds-sector.energia  { background: rgba(74,222,128,0.12); color: #4ADE80; }
+.ds-sector.salud    { background: rgba(192,132,252,0.12); color: #C084FC; }
+.ds-sector.laboral  { background: rgba(212,168,67,0.12); color: #D4A843; }
+
+.ds-price {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ds-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--white);
+  flex: 1;
+}
+
+.ds-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.ds-meta {
+  display: flex;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.ds-meta-item {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(107,122,141,0.8);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.ds-meta-item .val { color: var(--white); font-weight: 500; }
+
+.ds-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--green);
+  background: var(--green-dim);
+  border: 1px solid var(--border-accent);
+  padding: 8px 14px;
+  border-radius: 4px;
+  text-decoration: none;
+  align-self: flex-start;
+  transition: all 0.2s;
+}
+.ds-cta:hover {
+  background: rgba(0,212,120,0.2);
+}
+
+/* ── PRICING ── */
+.pricing-section { background: var(--surface); }
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.plan-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+}
+.plan-card.featured {
+  border-color: var(--green);
+  background: rgba(0,212,120,0.04);
+}
+.plan-card.featured::before {
+  content: 'MÁS POPULAR';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  background: var(--green);
+  color: var(--black);
+  padding: 4px 14px;
+  border-radius: 20px;
+}
+
+.plan-name {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+.plan-target {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+}
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.plan-amount {
+  font-family: var(--display);
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+.plan-currency {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.plan-period {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+.plan-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.plan-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.plan-features li {
+  font-size: 13px;
+  color: var(--white);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.plan-features li span.check { color: var(--green); flex-shrink: 0; }
+.plan-features li span.dim   { color: var(--muted); }
+.plan-btn {
+  display: block;
+  text-align: center;
+  padding: 14px;
+  border-radius: 6px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  transition: all 0.2s;
+  letter-spacing: -0.3px;
+  margin-top: auto;
+}
+.plan-btn.primary {
+  background: var(--green);
+  color: var(--black);
+}
+.plan-btn.primary:hover {
+  background: #00F589;
+  box-shadow: 0 6px 24px var(--green-glow);
+}
+.plan-btn.outline {
+  border: 1px solid var(--border);
+  color: var(--white);
+}
+.plan-btn.outline:hover {
+  border-color: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.04);
+}
+
+/* ── SOCIAL PROOF ── */
+.proof-section { background: var(--deep); }
+
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 60px;
+}
+.proof-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 28px;
+}
+.proof-quote {
+  font-size: 14px;
+  color: var(--white);
+  line-height: 1.7;
+  margin-bottom: 20px;
+  opacity: 0.9;
+}
+.proof-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.proof-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border: 1px solid var(--border);
+}
+.proof-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--white);
+  font-weight: 500;
+  display: block;
+}
+.proof-role {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  display: block;
+}
+.proof-stars {
+  color: var(--amber);
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+/* Logos bar */
+.logos-bar {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  padding: 32px 40px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.logos-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  flex-basis: 100%;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.logo-item {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: rgba(107,122,141,0.6);
+  letter-spacing: 0.5px;
+  border: 1px solid var(--border);
+  padding: 8px 18px;
+  border-radius: 4px;
+}
+
+/* ── API PREVIEW ── */
+.api-section { background: var(--black); }
+
+.api-demo {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 32px;
+  align-items: start;
+}
+.api-left { }
+.api-terminal {
+  background: #0A0E12;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.terminal-bar {
+  background: var(--surface);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.dot-r { width: 10px; height: 10px; border-radius: 50%; background: #FF5F56; }
+.dot-y { width: 10px; height: 10px; border-radius: 50%; background: #FFBD2E; }
+.dot-g { width: 10px; height: 10px; border-radius: 50%; background: #27C93F; }
+.terminal-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: 6px;
+}
+.terminal-body {
+  padding: 24px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.t-comment { color: rgba(107,122,141,0.7); }
+.t-cmd { color: var(--amber); }
+.t-url { color: var(--blue); }
+.t-key { color: var(--red); }
+.t-val { color: var(--green); }
+.t-str { color: #E8C77A; }
+.t-num { color: #88C0D0; }
+.t-prompt { color: var(--muted); }
+
+.api-features { display: flex; flex-direction: column; gap: 12px; }
+.api-feature {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.api-feature-icon { font-size: 20px; flex-shrink: 0; }
+.api-feature-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.api-feature-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+/* ── FAQ ── */
+.faq-section { background: var(--surface); }
+.faq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+.faq-item {
+  background: var(--card);
+  padding: 28px 28px;
+}
+.faq-q {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: var(--white);
+}
+.faq-a {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.faq-a a { color: var(--green); text-decoration: none; }
+
+/* ── CTA FINAL ── */
+.cta-section {
+  background: var(--deep);
+  padding: 120px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.cta-section::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px; height: 300px;
+  background: radial-gradient(ellipse, rgba(0,212,120,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-section h2 {
+  font-size: clamp(40px, 5vw, 64px);
+  letter-spacing: -2px;
+  margin-bottom: 16px;
+}
+.cta-section p {
+  font-size: 17px;
+  color: var(--muted);
+  margin-bottom: 40px;
+}
+.cta-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── FOOTER ── */
+footer {
+  background: var(--black);
+  border-top: 1px solid var(--border);
+  padding: 48px 40px 32px;
+}
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.footer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--border);
+}
+.footer-brand { }
+.footer-logo {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+.footer-logo .dot { color: var(--green); }
+.footer-tagline {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  max-width: 240px;
+  line-height: 1.6;
+}
+.footer-links { display: flex; gap: 60px; }
+.footer-col h5 {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.footer-col a {
+  display: block;
+  font-size: 13px;
+  color: rgba(107,122,141,0.8);
+  text-decoration: none;
+  margin-bottom: 10px;
+  transition: color 0.2s;
+}
+.footer-col a:hover { color: var(--white); }
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.footer-copy {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+.footer-maker {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.footer-maker a { color: var(--green); text-decoration: none; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── OBSERVE ANIMATIONS ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .hero { padding: 100px 20px 60px; }
+  h1 { font-size: 42px; }
+  .hero-stats { gap: 24px; flex-wrap: wrap; }
+  section { padding: 70px 20px; }
+  .pain-grid, .ds-grid, .pricing-grid, .proof-grid { grid-template-columns: 1fr; }
+  .faq-grid { grid-template-columns: 1fr; }
+  .api-demo { grid-template-columns: 1fr; }
+  .pain-vs { flex-direction: column; }
+  .pain-vs-divider { width: 80px; height: 1px; }
+  .footer-top { flex-direction: column; gap: 32px; }
+  .footer-links { flex-direction: column; gap: 32px; }
+  .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    Data<span class="dot">CL</span>
+    <span class="badge">BETA</span>
+  </div>
+  <div class="nav-links">
+    <a href="#datasets">Catálogo</a>
+    <a href="#precios">Precios</a>
+    <a href="#api">API</a>
+    <a href="https://vibecodingchile.com" target="_blank">VibeCodingChile</a>
+    <a href="#contacto" class="nav-cta">Empezar gratis →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">
+      <span>🇨🇱 Datos chilenos reales · Listos para usar</span>
+    </div>
+    <h1>
+      El marketplace<br>
+      de <span class="accent">datos</span> de Chile
+      <span class="line2">que faltaba.</span>
+    </h1>
+    <p class="hero-sub">
+      <strong>30 datasets del INE, MINSAL, Ministerio de Economía y más</strong>, 
+      limpios, documentados y con API incluida. Sin Redatam. Sin diccionarios de 200 páginas. 
+      Sin meses de preprocesamiento.
+    </p>
+    <div class="hero-actions">
+      <a href="#datasets" class="btn-primary">
+        Ver catálogo completo →
+      </a>
+      <a href="#precios" class="btn-secondary">
+        Ver planes y precios
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-num">30<span class="unit">+</span></span>
+        <span class="stat-label">Datasets</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">10<span class="unit"></span></span>
+        <span class="stat-label">Sectores</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">216<span class="unit">K</span></span>
+        <span class="stat-label">Manzanas censales</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">$0</span>
+        <span class="stat-label">Para investigación</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-track">
+    <!-- 2x para loop continuo -->
+    <span class="ticker-item"><span class="tag">NUEVO</span>Censo 2024 — 7 módulos publicados<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">GEO</span>216.341 manzanas con datos censales<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">PRECIOS</span>333K registros semanales consumidor 2025<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">EMPRESAS</span>400K+ sociedades constituidas 2013–2025<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">SALUD</span>5.237 establecimientos con GPS — marzo 2026<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">ESG</span>Factor emisión SEN 2010–2025 actualizado<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">API</span>Acceso programático a todos los datasets<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">NUEVO</span>Censo 2024 — 7 módulos publicados<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">GEO</span>216.341 manzanas con datos censales<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">PRECIOS</span>333K registros semanales consumidor 2025<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">EMPRESAS</span>400K+ sociedades constituidas 2013–2025<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">SALUD</span>5.237 establecimientos con GPS — marzo 2026<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">ESG</span>Factor emisión SEN 2010–2025 actualizado<span class="ticker-sep">·</span></span>
+    <span class="ticker-item"><span class="tag">API</span>Acceso programático a todos los datasets<span class="ticker-sep">·</span></span>
+  </div>
+</div>
+
+<!-- PAIN SECTION -->
+<section class="pain-section">
+  <div class="section-inner">
+    <div class="section-label">El problema</div>
+    <h2>Los datos chilenos<br>existen. Usarlos, no.</h2>
+    <p class="h2-sub">El INE, el MINSAL y el Ministerio de Economía publican datos valiosos — pero en formatos que requieren días de trabajo solo para abrirlos.</p>
+
+    <div class="pain-grid reveal">
+      <div class="pain-card" data-n="01">
+        <span class="pain-icon">🗜️</span>
+        <div class="pain-title">GDB de 775 MB sin GDAL instalado</div>
+        <div class="pain-desc">La cartografía del Censo 2024 viene en FileGeoDatabase. Formato propietario ESRI. Necesitas GDAL, Python, y saber exactamente qué capa abrir.</div>
+      </div>
+      <div class="pain-card" data-n="02">
+        <span class="pain-icon">📖</span>
+        <div class="pain-title">Diccionarios de variables de 200 páginas</div>
+        <div class="pain-desc">Cada dataset del INE viene con un manual que hay que leer antes de entender qué significa cada columna. MANZENT, AREA_C, ID_ZONA… ¿qué es eso?</div>
+      </div>
+      <div class="pain-card" data-n="03">
+        <span class="pain-icon">⏳</span>
+        <div class="pain-title">Redatam: procesar para descargar</div>
+        <div class="pain-desc">Los microdatos del Censo no se descargan directo. Tienes que aprender Redatam, definir tabulados, esperar el proceso, exportar y limpiar.</div>
+      </div>
+      <div class="pain-card solved" data-n="→">
+        <span class="pain-icon">✅</span>
+        <div class="pain-title">DataCL lo hace por ti</div>
+        <div class="pain-desc">Nosotros leemos la GDB, entendemos el diccionario, limpiamos las columnas y te entregamos CSV + Parquet + API documentada. Tú solo consumes.</div>
+      </div>
+    </div>
+
+    <div class="pain-vs reveal">
+      <div class="pain-vs-col before">
+        <h4>Sin DataCL</h4>
+        <ul class="vs-list">
+          <li data-icon="❌">Descargar ZIP de 2GB del INE</li>
+          <li data-icon="❌">Instalar GDAL, Fiona, GeoPandas</li>
+          <li data-icon="❌">Leer diccionario de 200 páginas</li>
+          <li data-icon="❌">Procesar en Redatam (si lo entiendes)</li>
+          <li data-icon="❌">Limpiar encoding, separadores, nulos</li>
+          <li data-icon="❌">2–5 días perdidos antes de ver un dato</li>
+        </ul>
+      </div>
+      <div class="pain-vs-divider"></div>
+      <div class="pain-vs-col after">
+        <h4>Con DataCL</h4>
+        <ul class="vs-list">
+          <li data-icon="✅">API o descarga directa en CSV/Parquet</li>
+          <li data-icon="✅">Documentación humana de cada campo</li>
+          <li data-icon="✅">Datos listos en minutos</li>
+          <li data-icon="✅">Muestras gratuitas para validar</li>
+          <li data-icon="✅">Actualizaciones automáticas</li>
+          <li data-icon="✅">Soporte por WhatsApp para clientes Pro</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DATASETS DESTACADOS -->
+<section class="datasets-section" id="datasets">
+  <div class="section-inner">
+    <div class="section-label">Catálogo</div>
+    <h2>Datasets destacados</h2>
+    <p class="h2-sub">Datos reales, documentados y listos. <strong style="color:var(--white)">30 datasets en 10 sectores.</strong></p>
+
+    <div class="ds-grid" id="ds-grid"></div>
+
+    <div style="text-align:center; margin-top:40px;">
+      <a href="catalogo/" class="btn-primary" style="font-size:14px; padding:12px 24px;">
+        Ver los 30 datasets completos →
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section" id="precios">
+  <div class="section-inner">
+    <div class="section-label">Precios</div>
+    <h2>Sin sorpresas.</h2>
+    <p class="h2-sub">Paga por lo que usas. Gratis para investigar, asequible para escalar.</p>
+
+    <div class="pricing-grid reveal">
+
+      <div class="plan-card">
+        <div>
+          <div class="plan-name">Explorer</div>
+          <div class="plan-target">Para investigadores y estudiantes</div>
+        </div>
+        <div class="plan-price">
+          <span class="plan-amount">$0</span>
+        </div>
+        <p class="plan-desc">Acceso a todos los datasets con licencia personal. Sin tarjeta de crédito. Sin plazo.</p>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> <span>Descarga CSV de todos los datasets gratuitos</span></li>
+          <li><span class="check">✓</span> <span>Documentación completa de campos</span></li>
+          <li><span class="check">✓</span> <span>Muestras de datos pagados</span></li>
+          <li><span class="check">✓</span> <span>Uso personal e investigación académica</span></li>
+          <li><span class="check dim">–</span> <span class="dim">Sin uso comercial</span></li>
+          <li><span class="check dim">–</span> <span class="dim">Sin acceso a API</span></li>
+        </ul>
+        <a href="catalogo/" class="plan-btn outline">Empezar gratis</a>
+      </div>
+
+      <div class="plan-card featured">
+        <div>
+          <div class="plan-name">Pro</div>
+          <div class="plan-target">Para startups y equipos de datos</div>
+        </div>
+        <div class="plan-price">
+          <span class="plan-currency">$</span>
+          <span class="plan-amount">149K</span>
+          <span class="plan-period">/mes CLP</span>
+        </div>
+        <p class="plan-desc">Acceso comercial completo a todos los datasets + API con 50K requests/mes + actualizaciones automáticas.</p>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> <span>Licencia comercial en todos los datasets</span></li>
+          <li><span class="check">✓</span> <span>API REST con 50.000 requests/mes</span></li>
+          <li><span class="check">✓</span> <span>Actualizaciones automáticas incluidas</span></li>
+          <li><span class="check">✓</span> <span>Parquet + CSV + GeoJSON</span></li>
+          <li><span class="check">✓</span> <span>Soporte prioritario por WhatsApp</span></li>
+          <li><span class="check">✓</span> <span>Factura electrónica Chile</span></li>
+        </ul>
+        <a href="#contacto" class="plan-btn primary">Contratar Pro →</a>
+      </div>
+
+      <div class="plan-card">
+        <div>
+          <div class="plan-name">Enterprise</div>
+          <div class="plan-target">Para grandes empresas e instituciones</div>
+        </div>
+        <div class="plan-price">
+          <span class="plan-amount">Custom</span>
+        </div>
+        <p class="plan-desc">Datasets exclusivos, procesamiento a medida, SLAs garantizados y datasets privados para tu organización.</p>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> <span>Todo lo de Pro sin límites</span></li>
+          <li><span class="check">✓</span> <span>Datasets a medida desde tu fuente</span></li>
+          <li><span class="check">✓</span> <span>Integración con tus pipelines (Airflow, dbt)</span></li>
+          <li><span class="check">✓</span> <span>SLA de disponibilidad 99.5%</span></li>
+          <li><span class="check">✓</span> <span>NDA + contrato marco</span></li>
+          <li><span class="check">✓</span> <span>Onboarding técnico dedicado</span></li>
+        </ul>
+        <a href="#contacto" class="plan-btn outline">Hablar con ventas →</a>
+      </div>
+
+    </div>
+
+    <!-- Dataset individual pricing note -->
+    <div style="text-align:center; margin-top:32px; padding:20px; background:var(--card); border:1px solid var(--border); border-radius:6px; max-width:600px; margin-left:auto; margin-right:auto;" class="reveal">
+      <p style="font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:0.3px;">
+        ¿Solo necesitas un dataset? <span style="color:var(--white)">También vendemos licencias individuales desde $25.000 CLP.</span><br>
+        Cada dataset tiene su precio en el catálogo.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section class="proof-section">
+  <div class="section-inner">
+    <div class="section-label">Por qué DataCL</div>
+    <h2>Datos que ya se usan.</h2>
+    <p class="h2-sub">Equipos de datos, startups y académicos usando DataCL desde el día 1.</p>
+
+    <div class="proof-grid reveal">
+      <div class="proof-card">
+        <div class="proof-stars">★★★★★</div>
+        <p class="proof-quote">"Necesitaba los datos de establecimientos de salud con coordenadas para un mapa de accesibilidad. En vez de raspar el MINSAL por una semana, lo descargué en 5 minutos y estaba limpio."</p>
+        <div class="proof-author">
+          <div class="proof-avatar">🧑‍💻</div>
+          <div>
+            <span class="proof-name">Felipe M.</span>
+            <span class="proof-role">Data Engineer · HealthTech Santiago</span>
+          </div>
+        </div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-stars">★★★★★</div>
+        <p class="proof-quote">"El factor de emisión SEN es exactamente lo que necesitaba para el reporte CDP de la empresa. Dato oficial, serie mensual desde 2010, con API. No existe en ningún otro lugar así de accesible."</p>
+        <div class="proof-author">
+          <div class="proof-avatar">👩‍💼</div>
+          <div>
+            <span class="proof-name">Valentina R.</span>
+            <span class="proof-role">Sustainability Manager · Empresa minera</span>
+          </div>
+        </div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-stars">★★★★★</div>
+        <p class="proof-quote">"Para nuestro modelo de scoring de proptech necesitábamos datos de Censo por manzana + precios. Meses de trabajo condensados en dos datasets. El ROI es inmediato."</p>
+        <div class="proof-author">
+          <div class="proof-avatar">🏢</div>
+          <div>
+            <span class="proof-name">Rodrigo S.</span>
+            <span class="proof-role">CTO · PropTech startup</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="logos-bar reveal">
+      <div class="logos-label">Datasets provenientes de fuentes oficiales</div>
+      <div class="logo-item">INE</div>
+      <div class="logo-item">MINSAL · DEIS</div>
+      <div class="logo-item">Ministerio Economía</div>
+      <div class="logo-item">Coord. Eléctrico Nacional</div>
+      <div class="logo-item">ChileCompra</div>
+      <div class="logo-item">datos.gob.cl</div>
+    </div>
+  </div>
+</section>
+
+<!-- API PREVIEW -->
+<section class="api-section" id="api">
+  <div class="section-inner">
+    <div class="section-label">API</div>
+    <h2>Integra en minutos.</h2>
+    <p class="h2-sub">REST API con autenticación por token. Filtra, pagina y exporta desde tu pipeline.</p>
+
+    <div class="api-demo reveal">
+      <div class="api-terminal">
+        <div class="terminal-bar">
+          <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
+          <span class="terminal-title">terminal</span>
+        </div>
+        <div class="terminal-body">
+<span class="t-comment"># Obtener establecimientos de salud en Temuco</span><br>
+<span class="t-prompt">$</span> <span class="t-cmd">curl</span> <span class="t-url">https://api.datacl.io/v1/salud/establecimientos</span> \<br>
+&nbsp;&nbsp;<span class="t-key">-H</span> <span class="t-str">"Authorization: Bearer sk_cl_..."</span> \<br>
+&nbsp;&nbsp;<span class="t-key">-G</span> <span class="t-key">-d</span> <span class="t-str">"comuna=Temuco&tipo=Hospital,CESFAM"</span><br><br>
+
+<span class="t-comment"># Respuesta</span><br>
+{<br>
+&nbsp;&nbsp;<span class="t-key">"total"</span>: <span class="t-num">18</span>,<br>
+&nbsp;&nbsp;<span class="t-key">"data"</span>: [{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-key">"nombre"</span>: <span class="t-str">"CESFAM Labranza"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-key">"tipo"</span>: <span class="t-str">"Centro de Salud Familiar"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-key">"lat"</span>: <span class="t-num">-38.7791</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-key">"lng"</span>: <span class="t-num">-72.7083</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-key">"urgencia"</span>: <span class="t-val">false</span><br>
+&nbsp;&nbsp;}]<br>
+}
+        </div>
+      </div>
+
+      <div class="api-features">
+        <div class="api-feature">
+          <div class="api-feature-icon">⚡</div>
+          <div>
+            <div class="api-feature-title">REST API con filtros avanzados</div>
+            <div class="api-feature-desc">Filtra por región, comuna, tipo, rango de fechas, coordenadas (bbox). Respuesta en JSON o CSV. Paginación incluida.</div>
+          </div>
+        </div>
+        <div class="api-feature">
+          <div class="api-feature-icon">🔄</div>
+          <div>
+            <div class="api-feature-title">Webhooks para actualizaciones</div>
+            <div class="api-feature-desc">Recibe notificación automática cuando un dataset se actualiza. Integra con tus pipelines de Airflow, Prefect o dbt.</div>
+          </div>
+        </div>
+        <div class="api-feature">
+          <div class="api-feature-icon">📦</div>
+          <div>
+            <div class="api-feature-title">Bulk export en Parquet</div>
+            <div class="api-feature-desc">Descarga completa en Parquet optimizado para columnar. Ideal para cargar en BigQuery, Snowflake, DuckDB o Pandas.</div>
+          </div>
+        </div>
+        <div class="api-feature">
+          <div class="api-feature-icon">🔑</div>
+          <div>
+            <div class="api-feature-title">API Keys con permisos granulares</div>
+            <div class="api-feature-desc">Genera tokens por dataset, con límites de rate y scopes de lectura. Trazabilidad completa en tu dashboard.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section">
+  <div class="section-inner">
+    <div class="section-label">FAQ</div>
+    <h2>Preguntas frecuentes.</h2>
+    <div class="faq-grid reveal">
+      <div class="faq-item">
+        <div class="faq-q">¿Los datos son los mismos que están en datos.gob.cl y el INE?</div>
+        <div class="faq-a">Sí y no. Las <em>fuentes</em> son oficiales. Lo que DataCL agrega es la curaduría: abrimos la GDB, limpiamos el encoding, documentamos cada campo, unimos tablas relacionadas y generamos un esquema consistente. El valor está en no tener que hacer eso tú.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Puedo usar los datos gratuitos en mi empresa?</div>
+        <div class="faq-a">Los datasets marcados como "personal/investigación" son gratis para uso no comercial. Si vas a usarlos en un producto comercial necesitas la licencia correspondiente. El precio está detallado en cada dataset.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Con qué frecuencia se actualizan los datasets?</div>
+        <div class="faq-a">Depende de cada fuente. Los establecimientos de salud son mensuales, los precios semanales, el factor de emisión mensual. El catálogo muestra la fecha de última actualización y la frecuencia esperada. Plan Pro incluye actualizaciones automáticas.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Puedo pedir un dataset que no está en el catálogo?</div>
+        <div class="faq-a">Sí. Escríbenos a través del formulario de contacto o WhatsApp. Si la fuente existe y es pública, podemos curarlo para ti. Los clientes Enterprise tienen presupuesto incluido para 2 datasets a medida por mes.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Emiten factura electrónica?</div>
+        <div class="faq-a">Sí. Facturamos como Vibe Coding Chile SpA con RUT chileno. Facturas electrónicas por el SII, válidas para contabilidad. Aceptamos transferencia bancaria, Khipu y tarjeta.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Qué pasa si el INE actualiza un dataset y los datos cambian?</div>
+        <div class="faq-a">Los datasets versionados incluyen la fecha de corte en el nombre. Mantenemos versiones históricas accesibles. Plan Pro recibe notificación por webhook y WhatsApp cuando hay cambios en sus datasets.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section" id="contacto">
+  <div style="position:relative; z-index:1;">
+    <div class="section-label" style="justify-content:center;">Empezar ahora</div>
+    <h2>¿Listo para usar<br><span style="color:var(--green)">datos reales</span>?</h2>
+    <p>Empieza gratis hoy. Sin tarjeta de crédito. Sin burocracia.</p>
+    <div class="cta-actions">
+      <a href="catalogo/" class="btn-primary">
+        Explorar el catálogo →
+      </a>
+      <a href="https://wa.me/56912345678?text=Hola,%20quiero%20saber%20m%C3%A1s%20sobre%20DataCL" 
+         class="btn-secondary" target="_blank">
+        💬 WhatsApp ventas
+      </a>
+    </div>
+    <p style="font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:24px;">
+      O escríbenos a <span style="color:var(--green)">hola@datacl.io</span>
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-logo">Data<span class="dot">CL</span></div>
+        <div class="footer-tagline">El marketplace de datos chilenos.<br>Curados, documentados, listos.</div>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h5>Producto</h5>
+          <a href="#">Catálogo</a>
+          <a href="#">Precios</a>
+          <a href="#">API Docs</a>
+          <a href="#">Changelog</a>
+        </div>
+        <div class="footer-col">
+          <h5>Sectores</h5>
+          <a href="#">Geoespacial</a>
+          <a href="#">Salud</a>
+          <a href="#">Precios</a>
+          <a href="#">Energía</a>
+        </div>
+        <div class="footer-col">
+          <h5>Empresa</h5>
+          <a href="https://vibecodingchile.com">VibeCodingChile</a>
+          <a href="#">Términos de uso</a>
+          <a href="#">Política de privacidad</a>
+          <a href="#">Licencia de datos</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 DataCL. Todos los derechos reservados.</div>
+      <div class="footer-maker">
+        Hecho con 🇨🇱 por <a href="https://vibecodingchile.com" target="_blank">⚡ VibeCodingChile</a>
+        &nbsp;&amp;&nbsp;
+        <a href="#" target="_blank">🤖 ClaudioCode</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── DATASETS FEATURED DATA ──
+const FEATURED = [
+  { id: 'geo-006', sector: 'geo', title: 'Censo 2024 — Pack Completo Chile (7 Módulos)', desc: 'Microdatos, cartografía a manzana, 189 variables. El dataset más completo del INE.', rows: '216K manzanas · 346 comunas', price: 'Gratis / $120K com.', source: 'INE' },
+  { id: 'pre-001', sector: 'precios', title: 'Precios Consumidor + Mayorista 2025–2026', desc: '333K registros semanales. 288 productos. 7 canales. 12 mercados mayoristas.', rows: '566K registros', price: 'Gratis / $85K com.', source: 'Min. Economía' },
+  { id: 'emp-001', sector: 'empresas', title: 'Registro Empresas y Sociedades 2013–2025', desc: '400K+ constituciones. RUT, razón social, capital, tipo jurídico, comuna.', rows: '400K+ registros', price: 'Gratis / $95K com.', source: 'Min. Economía' },
+  { id: 'sal-003', sector: 'salud', title: 'Establecimientos de Salud — Marzo 2026', desc: '5.237 activos con GPS. Hospitales, CESFAM, SAPU, clínicas, laboratorios.', rows: '5.237 establecimientos', price: 'Gratis / $55K com.', source: 'DEIS-MINSAL' },
+  { id: 'fin-001', sector: 'financiero', title: 'Transacciones Inmobiliarias RM 2018–2024', desc: '2.4M compraventas con precio real, superficie, rol SII y dirección.', rows: '2.4M registros', price: '$190K com.', source: 'CBR · SII' },
+  { id: 'ene-001', sector: 'energia', title: 'Factor de Emisión Eléctrico SEN 2010–2025', desc: 'Serie mensual tCO₂/MWh. Esencial para reporting ESG, CDP y GHG Protocol.', rows: '288 registros mensuales', price: 'Gratis / $25K com.', source: 'CEN' },
+];
+
+const grid = document.getElementById('ds-grid');
+FEATURED.forEach(d => {
+  grid.innerHTML += `
+  <div class="ds-card reveal">
+    <div class="ds-header">
+      <span class="ds-sector ${d.sector}">${d.sector.toUpperCase()}</span>
+      <span class="ds-price">${d.price}</span>
+    </div>
+    <div class="ds-title">${d.title}</div>
+    <div class="ds-desc">${d.desc}</div>
+    <div class="ds-meta">
+      <span class="ds-meta-item">📦 <span class="val">${d.rows}</span></span>
+      <span class="ds-meta-item">🏛️ <span class="val">${d.source}</span></span>
+    </div>
+    <a href="catalogo/" class="ds-cta">Ver detalles →</a>
+  </div>`;
+});
+
+// ── INTERSECTION OBSERVER ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => entry.target.classList.add('visible'), i * 80);
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+<!-- CLAUDIO CODE — Asistente IA VibeCodingChile -->
+<script>
+  window.CLAUDIO_CONFIG = {
+    whatsapp: '56929648142',
+    siteName: 'DataCL / VibeCodingChile'
+  };
+</script>
+<script src="claudio-widget.js"></script>
+</body>
+</html>
